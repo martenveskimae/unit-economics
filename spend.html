@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Unit Economics</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#111111;
+      --muted:#5a5a5a;
+      --rule:#dadada;
+      --grid:#ececec;
+      --axis:#3d3d3d;
+      --blue:#1f4e8c;
+      --green:#1d6a45;
+      --red:#a4342f;
+      --amber:#88621d;
+      --ink:#171717;
+    }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.42;
+    }
+    .wrap{
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px 28px 26px;
+      display:grid;
+      grid-template-columns: 440px minmax(0, 1fr);
+      gap: 34px;
+    }
+    @media (max-width: 1080px){
+      .wrap{
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+    .card{ padding:0; }
+    .sidebar{
+      padding-right:24px;
+      border-right:1px solid var(--rule);
+    }
+    @media (max-width: 1080px){
+      .sidebar{
+        border-right:none;
+        border-bottom:1px solid var(--rule);
+        padding-right:0;
+        padding-bottom:18px;
+      }
+    }
+    .chartCol{
+      padding-left:2px;
+    }
+    h1{
+      font-size:29px;
+      line-height:1.1;
+      margin:0 0 12px;
+      font-weight:600;
+      letter-spacing:-0.01em;
+    }
+    h2{
+      font-size:12px;
+      margin:22px 0 10px;
+      color:var(--muted);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-weight:600;
+    }
+    .small{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .kpis{
+      border-top:1px solid var(--rule);
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 5px 12px;
+      padding: 8px 0;
+      border-bottom:1px solid var(--rule);
+    }
+    .kpi .t{
+      font-size:12px;
+      color:var(--muted);
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing:.01em;
+    }
+    .kpi .v{
+      font-size:21px;
+      font-weight:600;
+      line-height:1.05;
+      color:var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi .small{
+      grid-column:1 / -1;
+      margin-top:-1px;
+      font-size:11px;
+    }
+
+    .row{
+      position:relative;
+      margin: 0;
+      padding: 10px 0 11px;
+      border-bottom:1px dotted var(--rule);
+    }
+    .labelwrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .labelwrap label{
+      font-size:12px;
+      color:var(--text);
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      letter-spacing:.01em;
+    }
+    .control{
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) 92px;
+      align-items:center;
+      gap:10px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color:var(--ink);
+    }
+    input[type="number"]{
+      width:100%;
+      background:#fff;
+      border:1px solid var(--rule);
+      border-radius:0;
+      padding:5px 6px;
+      color:var(--text);
+      font-size:12px;
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .infoBtn{
+      width:16px;
+      height:16px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      border:1px solid var(--rule);
+      background:#fff;
+      color:#4a4a4a;
+      cursor:pointer;
+      padding:0;
+      flex:0 0 auto;
+    }
+    .infoBtn:hover{border-color:#bdbdbd;}
+    .infoBtn svg{width:12px;height:12px;}
+
+    .popover{
+      position:fixed;
+      top: 0;
+      left: 0;
+      width: 355px;
+      max-width: min(355px, calc(100vw - 24px));
+      background:#111111;
+      color:#ffffff;
+      border:1px solid #111111;
+      border-radius:8px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.18);
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      z-index: 50;
+      display:none;
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    .popover::before{
+      content:"";
+      position:absolute;
+      top:50%;
+      left:-7px;
+      transform:translateY(-50%);
+      border-top:7px solid transparent;
+      border-bottom:7px solid transparent;
+      border-right:7px solid #111111;
+    }
+    .popover.show{display:block;}
+
+    .chartShell{ position:relative; }
+    svg#chart{
+      width:100%;
+      height:min(78vh, 760px);
+      min-height:560px;
+      background:transparent;
+      display:block;
+    }
+    .chartTip{
+      position:absolute;
+      display:none;
+      pointer-events:none;
+      z-index:60;
+      background:#151515;
+      color:#f7f7f7;
+      border-radius:2px;
+      padding:7px 9px;
+      font-size:11px;
+      line-height:1.35;
+      min-width:188px;
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    @media (min-width: 1081px){
+      html, body{
+        overflow:hidden;
+      }
+      .wrap{
+        height:100vh;
+        box-sizing:border-box;
+      }
+      .sidebar{
+        height:100%;
+        overflow-y:auto;
+        overscroll-behavior:contain;
+        padding-right:20px;
+      }
+      .chartCol{
+        height:100%;
+        align-self:stretch;
+      }
+      .chartShell{
+        height:100%;
+      }
+      svg#chart{
+        height:100%;
+        min-height:0;
+      }
+    }
+
+    .flag{font-weight:600;}
+    .flag.pos{color:var(--green);} 
+    .flag.neg{color:var(--red);} 
+    .flag.zero{color:var(--amber);} 
+
+    .formulas{
+      margin-top:10px;
+      border-top:1px solid var(--rule);
+      padding: 10px 0 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      color:#222;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .err{
+      display:none;
+      margin-top:8px;
+      color: var(--red);
+      font-size:12px;
+      font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card sidebar">
+      <h1>Unit Economics</h1>
+      <div class="small">
+        <b>LTV/CAC</b> tells you whether customers are worth acquiring.<br>
+        <b>Payback</b> tells you how long cash is tied up before you earn it back.<br>
+        <b>Contribution</b> tells you how much one active customer adds each month before fixed costs and acquisition spend.<br>
+        <b>Lowest cash balance</b> tells you the worst point in the runway.<br>
+        <b>Net Present Value (NPV)</b> discounts future net cash flows back to today's value.<br>
+        <b>Marginal NPV</b> answers whether the next € of acquisition spend is still value-creating.
+      </div>
+      <div id="err" class="err"></div>
+
+      <h2>Outputs</h2>
+      <div class="kpis">
+        <div class="kpi"><div class="t">Expected new customers / month (display floored)</div><div class="v" id="k_new">—</div></div>
+        <div class="kpi"><div class="t">Contribution / customer / month</div><div class="v" id="k_cm">—</div></div>
+        <div class="kpi"><div class="t">LTV (contribution)</div><div class="v" id="k_ltv">—</div></div>
+        <div class="kpi"><div class="t">LTV/CAC</div><div class="v" id="k_ltv_cac">—</div></div>
+        <div class="kpi"><div class="t">Payback (months)</div><div class="v" id="k_pb">—</div></div>
+        <div class="kpi"><div class="t">Net Present Value (NPV)</div><div class="v" id="k_npv">—</div></div>
+        <div class="kpi"><div class="t">Lowest cash balance</div><div class="v" id="k_lowcash">—</div></div>
+        <div class="kpi"><div class="t">Marginal NPV per €1 budget</div><div class="v" id="k_mnpv">—</div><div class="small" id="k_mflag">—</div></div>
+        <div class="kpi"><div class="t">Suggested acquisition budget / year</div><div class="v" id="k_opt_budget">—</div><div class="small" id="k_opt_note">Maximizes Net Present Value (NPV).</div></div>
+      </div>
+
+      <h2>Inputs</h2>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Acquisition budget / year</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="budgetY" type="range" min="0" max="3600000" step="10000" value="500000">
+          <input id="budgetYN" type="number" min="0" max="3600000" step="10000" value="500000">
+        </div>
+        <div class="popover" data-pop>Annual sales + marketing acquisition spend. Spread evenly across months to estimate expected monthly customer adds.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>CAC (per new customer)</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="cac" type="range" min="0" max="25000" step="100" value="5000">
+          <input id="cacN" type="number" min="0" max="25000" step="100" value="5000">
+        </div>
+        <div class="popover" data-pop>All-in baseline cost to acquire one customer. In this model CAC worsens with scale: CAC_eff = CAC × (1 + 0.45 × Budget_year / 1,000,000).</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Contract value / customer / year</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="acvY" type="range" min="0" max="250000" step="100" value="10000">
+          <input id="acvYN" type="number" min="0" max="250000" step="100" value="10000">
+        </div>
+        <div class="popover" data-pop>Baseline annual revenue per active customer. In this model ACV decays with scale for incremental customers.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Variable cost / customer / year</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="vcY" type="range" min="0" max="120000" step="100" value="3000">
+          <input id="vcYN" type="number" min="0" max="120000" step="100" value="3000">
+        </div>
+        <div class="popover" data-pop>Per-customer annual cost to deliver service. Scales with active customers.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Fixed cost / year</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="fixedY" type="range" min="0" max="10000000" step="10000" value="500000">
+          <input id="fixedYN" type="number" min="0" max="10000000" step="10000" value="500000">
+        </div>
+        <div class="popover" data-pop>Overhead not tied directly to customers. Converted to monthly fixed cost.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Churn / year (%)</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="churnPct" type="range" min="0" max="100" step="0.5" value="10">
+          <input id="churnPctN" type="number" min="0" max="100" step="0.5" value="10">
+        </div>
+        <div class="popover" data-pop>Baseline annual churn in percent. In this model churn increases with scale for incremental customers.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Starting cash</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="cash0" type="range" min="0" max="6000000" step="10000" value="1000000">
+          <input id="cash0N" type="number" min="0" max="6000000" step="10000" value="1000000">
+        </div>
+        <div class="popover" data-pop>Cash at month 0. Negative cash is allowed, but no additional financing penalty is applied.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Discount rate / year (%)</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="discPct" type="range" min="0" max="30" step="0.25" value="10">
+          <input id="discPctN" type="number" min="0" max="30" step="0.25" value="10">
+        </div>
+        <div class="popover" data-pop>Cost of capital in percent, used to discount future net cash flows when computing NPV.</div>
+      </div>
+
+      <div class="row">
+        <div class="labelwrap">
+          <label>Horizon (months)</label>
+          <button class="infoBtn" type="button" aria-label="Explain" data-tip-btn>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 8h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+        <div class="control">
+          <input id="T" type="range" min="12" max="120" step="1" value="72">
+          <input id="TN" type="number" min="12" max="120" step="1" value="72">
+        </div>
+        <div class="popover" data-pop>NPV and lowest cash balance are computed over this horizon.</div>
+      </div>
+
+      <h2>Model</h2>
+      <div class="formulas" id="formulaBox"></div>
+    </div>
+
+    <div class="card chartShell chartCol">
+      <svg id="chart" role="img" aria-label="Two-panel chart of monthly cash flow and cash balance"></svg>
+      <div id="chartTip" class="chartTip" aria-hidden="true"></div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const fmt0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+  const euroSym = (x) => Number.isFinite(x) ? ('€' + fmt0.format(Math.round(x))) : '—';
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  function cssVar(name, fallback){
+    const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return val || fallback;
+  }
+
+  function setError(msg){
+    const el = $('err');
+    if (!msg) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.style.display = 'block';
+    el.textContent = msg;
+  }
+
+  if (typeof d3 === 'undefined') {
+    setError('D3 failed to load. Check your network connection or bundle D3 locally.');
+    return;
+  }
+
+  const chartSvg = d3.select('#chart');
+  const chartTip = $('chartTip');
+  const budgetStep = parseFloat($('budgetY').step) || 10000;
+  const budgetMax = parseFloat($('budgetY').max) || 3600000;
+  let renderCount = 0;
+  let prevAxisDomains = null;
+
+  // popovers
+  const fixedPopover = document.createElement('div');
+  fixedPopover.id = 'fixedPopover';
+  fixedPopover.className = 'popover';
+  fixedPopover.setAttribute('role', 'tooltip');
+  fixedPopover.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(fixedPopover);
+
+  let openPopoverBtn = null;
+  const closeAll = () => {
+    document.querySelectorAll('.popover.show').forEach((p) => p.classList.remove('show'));
+    fixedPopover.setAttribute('aria-hidden', 'true');
+    openPopoverBtn = null;
+  };
+
+  function positionPopover(btn, pop){
+    const gap = 10;
+    const pad = 8;
+    const btnRect = btn.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+
+    let left = btnRect.right + gap;
+    let top = btnRect.top + (btnRect.height / 2) - (popRect.height / 2);
+
+    const maxLeft = window.innerWidth - popRect.width - pad;
+    const maxTop = window.innerHeight - popRect.height - pad;
+
+    left = clamp(left, pad, Math.max(pad, maxLeft));
+    top = clamp(top, pad, Math.max(pad, maxTop));
+
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+  }
+
+  function positionOpenPopover(){
+    if (!openPopoverBtn || !fixedPopover.classList.contains('show')) return;
+    positionPopover(openPopoverBtn, fixedPopover);
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-tip-btn]');
+    if (btn) {
+      const row = btn.closest('.row');
+      const pop = row.querySelector('[data-pop]');
+      const open = fixedPopover.classList.contains('show') && openPopoverBtn === btn;
+      closeAll();
+      if (!open) {
+        fixedPopover.textContent = (pop.textContent || '').trim();
+        fixedPopover.classList.add('show');
+        fixedPopover.setAttribute('aria-hidden', 'false');
+        positionPopover(btn, fixedPopover);
+        openPopoverBtn = btn;
+      }
+      e.stopPropagation();
+      return;
+    }
+    if (!e.target.closest('#fixedPopover')) closeAll();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAll();
+  });
+  document.addEventListener('scroll', positionOpenPopover, true);
+  window.addEventListener('resize', positionOpenPopover);
+
+  function bind(rangeId, numberId, onChange){
+    const r = $(rangeId);
+    const n = $(numberId);
+    if (!r || !n) throw new Error(`Missing control: ${rangeId} or ${numberId}`);
+
+    const sync = (source, target) => {
+      const min = parseFloat(source.min);
+      const max = parseFloat(source.max);
+      const raw = parseFloat(source.value);
+      const v = Number.isFinite(raw) ? clamp(raw, min, max) : min;
+      source.value = String(v);
+      target.value = String(v);
+      onChange();
+    };
+
+    r.addEventListener('input', () => sync(r, n));
+    n.addEventListener('input', () => sync(n, r));
+  }
+
+  const links = [
+    ['budgetY', 'budgetYN'],
+    ['cac', 'cacN'],
+    ['acvY', 'acvYN'],
+    ['vcY', 'vcYN'],
+    ['fixedY', 'fixedYN'],
+    ['churnPct', 'churnPctN'],
+    ['cash0', 'cash0N'],
+    ['discPct', 'discPctN'],
+    ['T', 'TN'],
+  ];
+
+  const toMonthlyRateFromAnnual = (pA) => 1 - Math.pow(1 - pA, 1 / 12);
+
+  function read(){
+    const get = (id) => parseFloat($(id).value);
+    return {
+      budgetY: get('budgetY'),
+      cac: get('cac'),
+      acvY: get('acvY'),
+      vcY: get('vcY'),
+      fixedY: get('fixedY'),
+      churnPct: get('churnPct'),
+      cash0: get('cash0'),
+      discPct: get('discPct'),
+      T: Math.max(12, Math.round(get('T'))),
+    };
+  }
+
+  function paybackMonths(cac, cmMonthly, churnM){
+    if (!Number.isFinite(cac) || cac <= 0) return 0;
+    if (!Number.isFinite(cmMonthly) || cmMonthly <= 0) return Infinity;
+    if (churnM <= 0) return Math.ceil(cac / cmMonthly);
+
+    const surv = 1 - churnM;
+    let cum = 0;
+    for (let m = 1; m <= 360; m++) {
+      cum += cmMonthly * Math.pow(surv, m - 1);
+      if (cum >= cac) return m;
+    }
+    return Infinity;
+  }
+
+  // Arrays are indexed 0..T; chart plots months 1..T.
+  function run(p){
+    const T = p.T;
+    const budgetY = Math.max(0, p.budgetY);
+    const budgetM = budgetY / 12;
+    const fixedM = Math.max(0, p.fixedY) / 12;
+    const varMPerCust = Math.max(0, p.vcY) / 12;
+    const budgetScale = budgetY / 1000000;
+
+    // Hardcoded real-world diminishing returns at higher spend.
+    const qualityScale = 1 - Math.exp(-budgetScale);
+    const acvYEff = Math.max(0, p.acvY * (1 - (0.22 * qualityScale)));
+    const churnPctEff = p.churnPct + (8.5 * qualityScale);
+    const revMPerCust = acvYEff / 12;
+
+    const churnA = clamp(churnPctEff / 100, 0, 0.999);
+    const churnM = toMonthlyRateFromAnnual(churnA);
+    const surv = 1 - churnM;
+    const discA = Math.max(0, p.discPct / 100);
+    const discM = Math.pow(1 + discA, 1 / 12) - 1;
+
+    const baseCAC = p.cac > 0 ? p.cac : NaN;
+    const CAC = Number.isFinite(baseCAC) ? (baseCAC * (1 + (0.45 * budgetScale))) : NaN;
+    const newCustRaw = Number.isFinite(CAC) && CAC > 0 ? (budgetM / CAC) : 0;
+    const NEW_CUST_CAP = 85;
+    const newCust = NEW_CUST_CAP * (1 - Math.exp(-newCustRaw / NEW_CUST_CAP));
+
+    // Budget is assumed fully spent even when conversion saturates.
+    const acqSpendM = Number.isFinite(CAC) && CAC > 0 ? budgetM : 0;
+    const cmMonthly = revMPerCust - varMPerCust;
+
+    const n = T + 1;
+    const active = new Array(n).fill(0);
+    const revenue = new Array(n).fill(0);
+    const variableCost = new Array(n).fill(0);
+    const contrib = new Array(n).fill(0);
+    const cost = new Array(n).fill(0);
+    const net = new Array(n).fill(0);
+    const cash = new Array(n).fill(0);
+    const discNet = new Array(n).fill(0);
+
+    cash[0] = p.cash0;
+
+    for (let t = 1; t <= T; t++) {
+      active[t] = (active[t - 1] * surv) + newCust;
+      revenue[t] = active[t] * revMPerCust;
+      variableCost[t] = active[t] * varMPerCust;
+      contrib[t] = revenue[t] - variableCost[t];
+      cost[t] = acqSpendM + fixedM + variableCost[t];
+      net[t] = revenue[t] - cost[t];
+      cash[t] = cash[t - 1] + net[t];
+      discNet[t] = net[t] / Math.pow(1 + discM, t);
+    }
+
+    const npv = discNet.reduce((sum, v) => sum + v, 0);
+
+    let lowCash = cash[1];
+    let lowCashMonth = 1;
+    for (let t = 2; t <= T; t++) {
+      if (cash[t] < lowCash) {
+        lowCash = cash[t];
+        lowCashMonth = t;
+      }
+    }
+
+    const ltv = churnM > 0 ? (cmMonthly / churnM) : Infinity;
+    const ltvCac = (Number.isFinite(ltv) && Number.isFinite(CAC) && CAC > 0) ? (ltv / CAC) : Infinity;
+    const pb = paybackMonths(CAC, cmMonthly, churnM);
+
+    return {
+      CAC,
+      acvYEff,
+      churnPctEff,
+      newCust,
+      cmMonthly,
+      churnM,
+      ltv,
+      ltvCac,
+      pb,
+      npv,
+      lowCash,
+      lowCashMonth,
+      series: { active, revenue, variableCost, contrib, cost, net, cash },
+    };
+  }
+
+  function marginalNPV(p){
+    const deltaY = 1000;
+    const lo = Math.max(0, p.budgetY - deltaY);
+    const hi = p.budgetY + deltaY;
+    if (hi === lo) return 0;
+    const npvLo = run({ ...p, budgetY: lo }).npv;
+    const npvHi = run({ ...p, budgetY: hi }).npv;
+    return (npvHi - npvLo) / (hi - lo);
+  }
+
+  function suggestBudget(p){
+    let best = { budgetY: 0, npv: run({ ...p, budgetY: 0 }).npv };
+    for (let by = budgetStep; by <= budgetMax; by += budgetStep) {
+      const trialNpv = run({ ...p, budgetY: by }).npv;
+      if (trialNpv > best.npv) best = { budgetY: by, npv: trialNpv };
+    }
+    return best;
+  }
+
+  function monthTicks(T){
+    const ticks = [1];
+    for (let m = 6; m <= T; m += 6) ticks.push(m);
+    if (ticks[ticks.length - 1] !== T) ticks.push(T);
+    return ticks;
+  }
+
+  function toRows(plan, T){
+    const rows = [];
+    const s = plan.series;
+    for (let t = 1; t <= T; t++) {
+      rows.push({
+        month: t,
+        revenue: s.revenue[t],
+        contribution: s.contrib[t],
+        totalCost: s.cost[t],
+        net: s.net[t],
+        cash: s.cash[t],
+      });
+    }
+    return rows;
+  }
+
+  function renderChart(plan, p){
+    chartTip.style.display = 'none';
+    chartTip.setAttribute('aria-hidden', 'true');
+
+    const node = chartSvg.node();
+    const rect = node.getBoundingClientRect();
+    const width = Math.max(320, Math.round(rect.width));
+    const height = Math.max(520, Math.round(rect.height));
+    chartSvg.attr('viewBox', `0 0 ${width} ${height}`);
+    chartSvg.selectAll('*').remove();
+
+    const margin = { top: 24, right: 162, bottom: 50, left: 82 };
+    const plotWidth = Math.max(120, width - margin.left - margin.right);
+    const innerHeight = Math.max(260, height - margin.top - margin.bottom);
+    const panelGap = 62;
+    const usableHeight = Math.max(220, innerHeight - panelGap);
+    let flowHeight = Math.round(usableHeight * 0.53);
+    let cashHeight = usableHeight - flowHeight;
+    if (cashHeight < 110) { cashHeight = 110; flowHeight = usableHeight - cashHeight; }
+    if (flowHeight < 130) { flowHeight = 130; cashHeight = usableHeight - flowHeight; }
+
+    const flowTop = margin.top;
+    const flowBottom = flowTop + flowHeight;
+    const cashTop = flowBottom + panelGap;
+    const cashBottom = cashTop + cashHeight;
+
+    const rows = toRows(plan, p.T);
+    const flowSeries = [
+      { key: 'revenue', label: 'Revenue', color: cssVar('--blue', '#1d4ed8') },
+      { key: 'contribution', label: 'Contribution', color: cssVar('--green', '#047857') },
+      { key: 'totalCost', label: 'Total cost', color: cssVar('--red', '#dc2626') },
+      { key: 'net', label: 'Net cash flow', color: cssVar('--amber', '#b45309') },
+    ];
+    const cashColor = cssVar('--ink', '#171717');
+    const axisColor = cssVar('--axis', '#3d3d3d');
+    const gridColor = cssVar('--grid', '#ececec');
+
+    const x = d3.scaleLinear()
+      .domain([1, p.T])
+      .range([margin.left, margin.left + plotWidth]);
+
+    const flowValues = rows.flatMap((d) => flowSeries.map((s) => d[s.key]));
+    let flowMin = Math.min(0, d3.min(flowValues));
+    let flowMax = Math.max(0, d3.max(flowValues));
+    if (flowMin === flowMax) { flowMin -= 1; flowMax += 1; }
+
+    let cashMin = Math.min(0, d3.min(rows, (d) => d.cash));
+    let cashMax = Math.max(0, d3.max(rows, (d) => d.cash));
+    if (cashMin === cashMax) { cashMin -= 1; cashMax += 1; }
+
+    const flowSpan = Math.max(1, flowMax - flowMin);
+    const cashSpan = Math.max(1, cashMax - cashMin);
+    const yFlow = d3.scaleLinear()
+      .domain([flowMin - (flowSpan * 0.05), flowMax + (flowSpan * 0.05)])
+      .range([flowBottom, flowTop]);
+
+    const yCash = d3.scaleLinear()
+      .domain([cashMin - (cashSpan * 0.05), cashMax + (cashSpan * 0.05)])
+      .range([cashBottom, cashTop]);
+
+    const startX = d3.scaleLinear()
+      .domain(prevAxisDomains && prevAxisDomains.x ? prevAxisDomains.x : x.domain())
+      .range(x.range());
+    const startYFlow = d3.scaleLinear()
+      .domain(prevAxisDomains && prevAxisDomains.yFlow ? prevAxisDomains.yFlow : yFlow.domain())
+      .range(yFlow.range());
+    const startYCash = d3.scaleLinear()
+      .domain(prevAxisDomains && prevAxisDomains.yCash ? prevAxisDomains.yCash : yCash.domain())
+      .range(yCash.range());
+    const startXTicks = monthTicks(Math.max(1, Math.round(startX.domain()[1])));
+
+    const root = chartSvg.append('g');
+    const fmtTick = (d) => '€' + d3.format(',.0f')(d);
+    const axisTransition = chartSvg.transition().duration(420).ease(d3.easeCubicOut);
+    const tickY = (node) => {
+      const tr = node.getAttribute('transform') || '';
+      const m = tr.match(/translate\(\s*[^,]+,\s*([^)]+)\)/);
+      return m ? parseFloat(m[1]) : NaN;
+    };
+    const styleGrid = (gridSel, baseOpacity) => {
+      gridSel.select('.domain').remove();
+      gridSel.selectAll('.tick line')
+        .attr('stroke', gridColor)
+        .attr('stroke-opacity', baseOpacity);
+      // Hide only the true top-most gridline (smallest y), never the bottom one.
+      let topY = Infinity;
+      gridSel.selectAll('.tick').each(function(){
+        const y = tickY(this);
+        if (Number.isFinite(y) && y < topY) topY = y;
+      });
+      if (Number.isFinite(topY)) {
+        gridSel.selectAll('.tick')
+          .filter(function(){
+            const y = tickY(this);
+            return Number.isFinite(y) && Math.abs(y - topY) < 0.5;
+          })
+          .select('line')
+          .attr('stroke-opacity', 0);
+      }
+    };
+
+    const flowGrid = root.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(startYFlow).ticks(6).tickSize(-plotWidth).tickFormat(''));
+    styleGrid(flowGrid, 0.92);
+    flowGrid.transition(axisTransition)
+      .call(d3.axisLeft(yFlow).ticks(6).tickSize(-plotWidth).tickFormat(''))
+      .on('start end interrupt', () => styleGrid(flowGrid, 0.92));
+
+    const cashGrid = root.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(startYCash).ticks(5).tickSize(-plotWidth).tickFormat(''));
+    styleGrid(cashGrid, 0.82);
+    cashGrid.transition(axisTransition)
+      .call(d3.axisLeft(yCash).ticks(5).tickSize(-plotWidth).tickFormat(''))
+      .on('start end interrupt', () => styleGrid(cashGrid, 0.82));
+
+    const flowAxis = root.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(startYFlow).ticks(6).tickFormat(fmtTick));
+    flowAxis.select('.domain').remove();
+    flowAxis.selectAll('text').attr('fill', axisColor).style('font-size', '11px');
+    flowAxis.selectAll('line').attr('stroke', axisColor).attr('stroke-opacity', 0.5);
+    flowAxis.transition(axisTransition)
+      .call(d3.axisLeft(yFlow).ticks(6).tickFormat(fmtTick));
+
+    const cashAxis = root.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(startYCash).ticks(5).tickFormat(fmtTick));
+    cashAxis.select('.domain').remove();
+    cashAxis.selectAll('text').attr('fill', axisColor).style('font-size', '11px');
+    cashAxis.selectAll('line').attr('stroke', axisColor).attr('stroke-opacity', 0.5);
+    cashAxis.transition(axisTransition)
+      .call(d3.axisLeft(yCash).ticks(5).tickFormat(fmtTick));
+
+    const xAxis = root.append('g')
+      .attr('transform', `translate(0,${cashBottom})`)
+      .call(d3.axisBottom(startX).tickValues(startXTicks).tickFormat((d) => `M${d}`));
+    xAxis.select('.domain').attr('stroke', axisColor).attr('stroke-opacity', 0.85);
+    xAxis.selectAll('text').attr('fill', axisColor).style('font-size', '11px');
+    xAxis.selectAll('line').attr('stroke', axisColor).attr('stroke-opacity', 0.5);
+    xAxis.transition(axisTransition)
+      .call(d3.axisBottom(x).tickValues(monthTicks(p.T)).tickFormat((d) => `M${d}`));
+
+    root.append('text')
+      .attr('x', margin.left)
+      .attr('y', flowTop - 8)
+      .attr('fill', axisColor)
+      .style('font-size', '11px')
+      .style('font-weight', 700)
+      .text('Monthly cash flow (€)');
+
+    root.append('text')
+      .attr('x', margin.left)
+      .attr('y', cashTop - 8)
+      .attr('fill', axisColor)
+      .style('font-size', '11px')
+      .style('font-weight', 700)
+      .text('Cash balance (€)');
+
+    root.append('text')
+      .attr('x', margin.left + plotWidth)
+      .attr('y', cashBottom + 37)
+      .attr('text-anchor', 'end')
+      .attr('fill', axisColor)
+      .style('font-size', '11px')
+      .text('Month');
+
+    if (yFlow.domain()[0] < 0 && yFlow.domain()[1] > 0) {
+      root.append('line')
+        .attr('x1', margin.left)
+        .attr('x2', margin.left + plotWidth)
+        .attr('y1', yFlow(0))
+        .attr('y2', yFlow(0))
+        .attr('stroke', axisColor)
+        .attr('stroke-opacity', 0.3)
+        .attr('stroke-dasharray', '3,3');
+    }
+
+    if (yCash.domain()[0] < 0 && yCash.domain()[1] > 0) {
+      root.append('line')
+        .attr('x1', margin.left)
+        .attr('x2', margin.left + plotWidth)
+        .attr('y1', yCash(0))
+        .attr('y2', yCash(0))
+        .attr('stroke', axisColor)
+        .attr('stroke-opacity', 0.25)
+        .attr('stroke-dasharray', '3,4');
+    }
+
+    renderCount += 1;
+    const flowClipId = `flow-clip-${renderCount}`;
+    const cashClipId = `cash-clip-${renderCount}`;
+    const defs = chartSvg.append('defs');
+
+    defs.append('clipPath')
+      .attr('id', flowClipId)
+      .append('rect')
+      .attr('x', margin.left)
+      .attr('y', flowTop)
+      .attr('width', plotWidth)
+      .attr('height', flowHeight);
+
+    defs.append('clipPath')
+      .attr('id', cashClipId)
+      .append('rect')
+      .attr('x', margin.left)
+      .attr('y', cashTop)
+      .attr('width', plotWidth)
+      .attr('height', cashHeight);
+
+    const flowLayer = root.append('g').attr('clip-path', `url(#${flowClipId})`);
+    const cashLayer = root.append('g').attr('clip-path', `url(#${cashClipId})`);
+
+    const flowLine = d3.line()
+      .x((d) => x(d.month))
+      .y((d) => yFlow(d.value))
+      .curve(d3.curveMonotoneX);
+
+    for (const series of flowSeries) {
+      flowLayer.append('path')
+        .datum(rows.map((d) => ({ month: d.month, value: d[series.key] })))
+        .attr('fill', 'none')
+        .attr('stroke', series.color)
+        .attr('stroke-width', 2)
+        .attr('d', flowLine);
+    }
+
+    if (cashMin < 0) {
+      const negativeArea = d3.area()
+        .x((d) => x(d.month))
+        .y0(yCash(0))
+        .y1((d) => yCash(Math.min(0, d.cash)))
+        .curve(d3.curveMonotoneX);
+
+      cashLayer.append('path')
+        .datum(rows)
+        .attr('d', negativeArea)
+        .attr('fill', cssVar('--red', '#a4342f'))
+        .attr('fill-opacity', 0.06);
+    }
+
+    const cashLine = d3.line()
+      .x((d) => x(d.month))
+      .y((d) => yCash(d.cash))
+      .curve(d3.curveMonotoneX);
+
+    cashLayer.append('path')
+      .datum(rows)
+      .attr('fill', 'none')
+      .attr('stroke', cashColor)
+      .attr('stroke-width', 2.8)
+      .attr('d', cashLine);
+
+    const xRightLabel = margin.left + plotWidth + 10;
+    const flowEndLabels = flowSeries.map((s) => ({
+      label: s.label,
+      color: s.color,
+      y: yFlow(rows[rows.length - 1][s.key]),
+    })).sort((a, b) => a.y - b.y);
+
+    const minGap = 14;
+    for (let i = 1; i < flowEndLabels.length; i++) {
+      flowEndLabels[i].y = Math.max(flowEndLabels[i].y, flowEndLabels[i - 1].y + minGap);
+    }
+
+    for (const label of flowEndLabels) {
+      root.append('text')
+        .attr('x', xRightLabel)
+        .attr('y', label.y)
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', label.color)
+        .style('font-size', '11px')
+        .style('font-weight', 700)
+        .text(label.label);
+    }
+
+    root.append('text')
+      .attr('x', xRightLabel)
+      .attr('y', yCash(rows[rows.length - 1].cash))
+      .attr('dominant-baseline', 'middle')
+      .attr('fill', cashColor)
+      .style('font-size', '11px')
+      .style('font-weight', 700)
+      .text('Balance');
+
+    const lowX = x(plan.lowCashMonth);
+    const lowY = yCash(plan.lowCash);
+    const lowAnchor = plan.lowCashMonth >= (p.T * 0.72) ? 'end' : 'start';
+    const lowDx = lowAnchor === 'start' ? -22 : -10;
+    const lowLabelY = clamp(lowY - 10, cashTop + 14, cashBottom - 18);
+
+    root.append('circle')
+      .attr('cx', lowX)
+      .attr('cy', lowY)
+      .attr('r', 4)
+      .attr('fill', cashColor);
+
+    root.append('text')
+      .attr('x', lowX + lowDx)
+      .attr('y', lowLabelY)
+      .attr('text-anchor', lowAnchor)
+      .attr('fill', axisColor)
+      .style('font-size', '11px')
+      .style('font-weight', 700)
+      .text('Low cash');
+
+    const focus = root.append('g').style('display', 'none');
+    focus.append('line')
+      .attr('y1', flowTop)
+      .attr('y2', cashBottom)
+      .attr('stroke', axisColor)
+      .attr('stroke-opacity', 0.32)
+      .attr('stroke-dasharray', '3,3');
+
+    const dots = {};
+    for (const s of flowSeries) {
+      dots[s.key] = focus.append('circle')
+        .attr('r', 3.2)
+        .attr('fill', s.color)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1.2);
+    }
+    dots.cash = focus.append('circle')
+      .attr('r', 3.8)
+      .attr('fill', cashColor)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1.2);
+
+    const overlay = root.append('rect')
+      .attr('x', margin.left)
+      .attr('y', flowTop)
+      .attr('width', plotWidth)
+      .attr('height', cashBottom - flowTop)
+      .attr('fill', 'transparent')
+      .style('cursor', 'crosshair');
+
+    const tooltipRow = (label, color, value) => (
+      `<div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:6px;"></span>${label}: ${euroSym(value)}</div>`
+    );
+
+    overlay
+      .on('mouseenter', () => {
+        focus.style('display', null);
+        chartTip.style.display = 'block';
+        chartTip.setAttribute('aria-hidden', 'false');
+      })
+      .on('mouseleave', () => {
+        focus.style('display', 'none');
+        chartTip.style.display = 'none';
+        chartTip.setAttribute('aria-hidden', 'true');
+      })
+      .on('mousemove', (event) => {
+        const [mx, my] = d3.pointer(event, chartSvg.node());
+        const month = clamp(Math.round(x.invert(mx)), 1, p.T);
+        const row = rows[month - 1];
+        const cx = x(month);
+
+        focus.select('line').attr('x1', cx).attr('x2', cx);
+        dots.revenue.attr('cx', cx).attr('cy', yFlow(row.revenue));
+        dots.contribution.attr('cx', cx).attr('cy', yFlow(row.contribution));
+        dots.totalCost.attr('cx', cx).attr('cy', yFlow(row.totalCost));
+        dots.net.attr('cx', cx).attr('cy', yFlow(row.net));
+        dots.cash.attr('cx', cx).attr('cy', yCash(row.cash));
+
+        chartTip.innerHTML = [
+          `<div style="font-weight:700;margin-bottom:4px;">Month ${month}</div>`,
+          tooltipRow('Revenue', flowSeries[0].color, row.revenue),
+          tooltipRow('Contribution', flowSeries[1].color, row.contribution),
+          tooltipRow('Total cost', flowSeries[2].color, row.totalCost),
+          tooltipRow('Net cash flow', flowSeries[3].color, row.net),
+          tooltipRow('Cash balance', cashColor, row.cash),
+        ].join('');
+
+        const tipW = chartTip.offsetWidth;
+        const tipH = chartTip.offsetHeight;
+        let left = cx + 14;
+        if (left + tipW > width - 8) left = cx - tipW - 14;
+        const top = clamp(my - tipH - 14, 8, height - tipH - 8);
+        chartTip.style.left = `${left}px`;
+        chartTip.style.top = `${top}px`;
+      });
+
+    prevAxisDomains = {
+      x: x.domain().slice(),
+      yFlow: yFlow.domain().slice(),
+      yCash: yCash.domain().slice(),
+    };
+  }
+
+  function runTests(){
+    const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
+
+    const p = read();
+    assert(p.T >= 12, 'T must be >= 12');
+
+    const a = run(p);
+    assert(a.series.cash.length === p.T + 1, 'cash series length mismatch');
+    assert(a.lowCashMonth >= 1 && a.lowCashMonth <= p.T, 'low cash month out of range');
+
+    const zeroBudget = run({ ...p, budgetY: 0 });
+    assert(zeroBudget.newCust === 0, 'zero budget should yield zero new customers');
+
+    const lowSpend = run({ ...p, budgetY: 200000 });
+    const highSpend = run({ ...p, budgetY: 3000000 });
+    assert(highSpend.CAC > lowSpend.CAC, 'effective CAC should worsen with scale');
+    assert(highSpend.acvYEff < lowSpend.acvYEff, 'effective ACV should decay with scale');
+    assert(highSpend.churnPctEff > lowSpend.churnPctEff, 'effective churn should increase with scale');
+
+    const highChurn = run({ ...p, churnPct: 80 });
+    assert(Number.isFinite(highChurn.churnM) && highChurn.churnM > 0, 'monthly churn should be finite and > 0');
+
+    const noChurn = run({ ...p, churnPct: 0 });
+    assert(noChurn.pb !== Infinity, 'payback should be finite with zero churn and positive CM');
+
+    const opt = suggestBudget(p);
+    assert(opt.budgetY >= 0 && opt.budgetY <= budgetMax, 'suggested budget out of bounds');
+    assert(opt.budgetY % budgetStep === 0, 'suggested budget should align to budget step');
+    assert(opt.budgetY > 0 && opt.budgetY < budgetMax, 'diminishing returns should allow an interior optimum');
+  }
+
+  function update(){
+    try {
+      setError('');
+      const p = read();
+      $('TN').value = p.T;
+      $('T').value = p.T;
+
+      const plan = run(p);
+      const mnpv = marginalNPV(p);
+      const opt = suggestBudget(p);
+
+      $('k_new').textContent = fmt0.format(Math.floor(plan.newCust));
+      $('k_cm').textContent = euroSym(plan.cmMonthly);
+      $('k_ltv').textContent = Number.isFinite(plan.ltv) ? euroSym(plan.ltv) : '∞';
+      $('k_ltv_cac').textContent = Number.isFinite(plan.ltvCac) ? fmt0.format(plan.ltvCac) : '∞';
+      $('k_pb').textContent = (plan.pb === Infinity) ? 'Never' : `${plan.pb} mo`;
+      $('k_npv').textContent = euroSym(plan.npv);
+      $('k_lowcash').textContent = `${euroSym(plan.lowCash)} (M${plan.lowCashMonth})`;
+      $('k_mnpv').textContent = fmt0.format(mnpv);
+      $('k_opt_budget').textContent = euroSym(opt.budgetY);
+
+      const flag = $('k_mflag');
+      if (mnpv > 0) flag.innerHTML = '<span class="flag pos">Value creating at margin</span>';
+      else if (mnpv < 0) flag.innerHTML = '<span class="flag neg">Value destroying at margin</span>';
+      else flag.innerHTML = '<span class="flag zero">Break-even at margin (not positive)</span>';
+
+      $('k_opt_note').textContent = 'Maximizes NPV over the budget slider range.';
+
+      const fm = [];
+      fm.push('Monthly conversions');
+      fm.push('  Budget_m = Budget_year / 12');
+      fm.push('  Fixed_m  = Fixed_year / 12');
+      fm.push('  Var_m    = VariableCost_year / 12');
+      fm.push('  Disc_m   = (1 + Discount_year/100)^(1/12) - 1');
+      fm.push('');
+      fm.push('Hardcoded diminishing returns');
+      fm.push('  CAC_eff = CAC * (1 + 0.45 * Budget_year / 1,000,000)');
+      fm.push('  quality = 1 - exp(-Budget_year / 1,000,000)');
+      fm.push('  ACV_eff = ContractValue_year * (1 - 0.22 * quality)');
+      fm.push('  Churn_eff = min(99.9%, Churn_year + 8.5pp * quality)');
+      fm.push('  Rev_m = ACV_eff / 12');
+      fm.push('  Churn_m = 1 - (1 - Churn_eff/100)^(1/12)');
+      fm.push('');
+      fm.push('Acquisition (expected customers with saturation)');
+      fm.push('  new_raw = Budget_m / CAC_eff');
+      fm.push('  new = 85 * (1 - exp(-new_raw / 85))');
+      fm.push('  Spend_m = Budget_m');
+      fm.push('');
+      fm.push('Cohorts + cash (t = 1..T; month 0 is starting cash)');
+      fm.push('  active(t) = active(t-1)*(1-Churn_m) + new');
+      fm.push('  revenue(t) = active(t) * Rev_m');
+      fm.push('  variableCost(t) = active(t) * Var_m');
+      fm.push('  contribution(t) = revenue(t) - variableCost(t)');
+      fm.push('  totalCost(t) = Spend_m + Fixed_m + variableCost(t)');
+      fm.push('  net(t) = revenue(t) - totalCost(t)');
+      fm.push('  cash(t) = cash(t-1) + net(t)');
+      fm.push('');
+      fm.push('Outputs');
+      fm.push('  CM_m = Rev_m - Var_m');
+      fm.push('  LTV ≈ CM_m / Churn_m');
+      fm.push('  LTV/CAC_eff = LTV / CAC_eff');
+      fm.push('  Payback: smallest m where sum[k=0..m-1] CM_m*(1-Churn_m)^k >= CAC_eff');
+      fm.push('  NPV: sum[t=1..T] net(t) / (1 + Disc_m)^t');
+      $('formulaBox').textContent = fm.join('\n');
+
+      renderChart(plan, p);
+    } catch (e) {
+      console.error(e);
+      setError(`Runtime error: ${e && e.message ? e.message : String(e)}`);
+    }
+  }
+
+  links.forEach(([r, n]) => bind(r, n, update));
+  window.addEventListener('resize', update);
+  update();
+
+  try {
+    runTests();
+  } catch (e) {
+    console.error('Tests failed:', e);
+  }
+})();
+</script>
+</body>
+</html>
